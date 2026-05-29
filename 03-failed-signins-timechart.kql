@@ -1,0 +1,15 @@
+// =============================================================
+// Exercise 3 - Workbook tile: failed sign-ins over time
+// =============================================================
+// Goal: timechart of failed sign-ins per hour, broken down by result.
+// Renders cleanly as a line/area chart in a workbook.
+//
+// Where to paste: Workbook > Add query > Run query > Visualization = Time chart
+// =============================================================
+
+SigninLogs
+| where TimeGenerated > ago(7d)
+| where ResultType != 0
+| summarize FailedAttempts = count()
+    by bin(TimeGenerated, 1h), ResultDescription
+| render timechart
