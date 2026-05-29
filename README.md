@@ -7,6 +7,8 @@ It is written for people who already know basic SIEM concepts but are new to Mic
 > **Prereq:** You need reader or contributor access to a Sentinel workspace that already contains sample sign-in data. 
 <!-- > The easiest setup is the **Microsoft Sentinel Training Lab** solution from Content Hub. -->
 
+> **Platform update (2026):** For new detections, Microsoft recommends **custom detection rules** in the Microsoft Defender portal as the primary path. Scheduled **analytics rules** are still available and useful in some scenarios, especially for Sentinel-ingested data. Also note the Azure portal Sentinel experience is on a retirement timeline, with Defender portal as the long-term destination.
+
 ---
 
 ## Before you start
@@ -127,7 +129,7 @@ SigninLogs
 
 In **Sentinel → Hunting → Queries → New Query**, paste the final query, give it a name and a MITRE tactic (Initial Access / Credential Access), and save.
 
-A hunting query is useful for analyst-led exploration. If you later want Sentinel to run the logic on a schedule and generate alerts automatically, the next step would be to turn the logic into an analytics rule.
+A hunting query is useful for analyst-led exploration. If you later want automated alerts, the next step is to operationalize the logic as a **custom detection rule** (preferred) or a scheduled **analytics rule** when that is the better fit for your environment.
 
 ---
 
@@ -156,25 +158,26 @@ If you want to start from a prepared template, import [`workbook-starter.json`](
 
 ---
 
-## Bonus Exercise 4 — Turn the hunt into a detection and enrich incidents
+## Bonus Exercise 4 — Turn the hunt into a custom detection and enrich incidents
 
-**Scenario:** Your impossible-travel hunt looks useful enough to operationalize. Convert it into a scheduled detection and make sure new incidents are enriched automatically for analysts.
+**Scenario:** Your impossible-travel hunt looks useful enough to operationalize. Convert it into a detection rule and make sure new incidents are enriched automatically for analysts.
 
-This exercise moves from ad-hoc hunting into repeatable detection engineering. The goal is to create a rule that generates incidents, map it to the relevant MITRE ATT&CK technique or tactic, and apply lightweight automation so triage starts with more context.
+This exercise moves from ad-hoc hunting into repeatable detection engineering. The goal is to create a rule that generates alerts/incidents and apply lightweight automation so triage starts with more context.
 
 **Tasks:**
 
-1. Go to **Sentinel → Analytics → Create → Scheduled query rule**
-2. Reuse the query from Exercise 2, or simplify it if needed so it returns only the events you want to alert on
-3. Name the rule *"Impossible Travel - Demo"* and set a reasonable schedule such as every 1 hour over the last 24 hours
-4. Configure the rule to create an incident and map the query to the appropriate MITRE ATT&CK category, such as **Initial Access** or **Credential Access**, based on how you want to describe the scenario
+1. In the **Microsoft Defender portal**, open the detection authoring experience (for example, **Detection engineering / Manage rules**) and start a **custom detection rule**
+2. Reuse the query from Exercise 2, or simplify it so it returns only the events you want to alert on
+3. Name the rule *"Impossible Travel - Demo"* and configure execution settings that match your objective (for example, hourly)
+4. Configure alert and incident behavior, including severity and key entity mapping (user, IP, location)
 5. Save and enable the rule
-6. Open the rule details and review how it appears in the **MITRE ATT&CK** view so you can see the detection represented in the matrix
-7. Go to **Sentinel → Automation** and create an **automation rule** that runs when incidents are created from this analytics rule
-8. Add simple enrichment actions, such as assigning severity, adding a tag, updating the title, or adding a comment that tells the analyst this incident came from the impossible-travel detection
-9. Trigger the rule on fresh data if available, then confirm the resulting incident includes the enrichment you configured
+6. Create or update an **automation rule** so incidents from this detection are enriched consistently
+7. Add simple enrichment actions, such as assigning severity, adding a tag, updating the title, or adding a comment that tells the analyst this incident came from the impossible-travel detection
+8. Trigger the rule on fresh data if available, then confirm the resulting incident includes the enrichment you configured
 
-This pattern is the bridge from hunting to operations: the analytics rule creates the signal, and the automation rule standardizes the first response steps.
+If your tenant still uses the classic Sentinel analytics workflow, you can perform the same exercise with a scheduled analytics rule and equivalent enrichment automation.
+
+This pattern is the bridge from hunting to operations: the detection rule creates the signal, and automation standardizes the first response steps.
 
 ---
 
@@ -192,7 +195,7 @@ Interactive queries are best for fast investigation over recent data. A KQL job 
 4. Submit the query as a **KQL job** instead of running it interactively
 5. When the job completes, review the output and identify the top users, countries, or source IPs involved in suspicious travel patterns
 6. Save the job results or export the findings if your environment supports it
-7. Decide whether the pattern should feed a new workbook tile, a hunting query, or a production analytics rule
+7. Decide whether the pattern should feed a new workbook tile, a hunting query, or a production custom detection rule (or analytics rule where applicable)
 
 If your environment does not expose the data lake features, you can still do the exercise conceptually by widening the query window and discussing when you would choose a batch-style job instead of an interactive query.
 
@@ -201,7 +204,7 @@ If your environment does not expose the data lake features, you can still do the
 ## Wrap up
 
 - Recap: you triaged an incident, hunted with KQL, and visualized findings — the full SecOps loop
-- Next steps: analytics rule templates, UEBA, automation playbooks (Logic Apps), and longer-range hunts over historical data
+- Next steps: custom detection rules, UEBA, automation playbooks (Logic Apps), and longer-range hunts over historical data
 - Resources:
   - [SC-200 learning path](https://learn.microsoft.com/training/courses/sc-200t00)
   - [Azure-Sentinel GitHub repo](https://github.com/Azure/Azure-Sentinel) — KQL query library, workbooks, playbooks
