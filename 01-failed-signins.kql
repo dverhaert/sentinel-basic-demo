@@ -1,0 +1,20 @@
+// =============================================================
+// Exercise 2 - Baseline query: noisy failed sign-ins
+// =============================================================
+// Goal: find accounts with > 10 failed sign-in attempts in 24h.
+// Use this as the starting point before extending to impossible travel.
+//
+// Where to paste: Microsoft Sentinel > Logs
+// Required table: SigninLogs (Azure AD / Entra ID connector)
+// =============================================================
+
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType != 0                       // 0 = success, anything else = failure
+| summarize
+    FailedAttempts = count(),
+    DistinctIPs   = dcount(IPAddress),
+    Countries     = make_set(tostring(LocationDetails.countryOrRegion), 10)
+    by UserPrincipalName
+| where FailedAttempts > 10
+| sort by FailedAttempts desc

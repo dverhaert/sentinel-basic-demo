@@ -1,0 +1,21 @@
+// =============================================================
+// Exercise 3 - Workbook tile: sign-ins by country
+// =============================================================
+// Goal: show sign-in volume by country - works as a Map or Bar chart.
+// Switch the workbook visualization to "Map" and pick Country as
+// the location field, or use "Bar chart" for a simpler view.
+//
+// Where to paste: Workbook > Add query > Visualization = Map or Bar chart
+// =============================================================
+
+SigninLogs
+| where TimeGenerated > ago(7d)
+| extend Country = tostring(LocationDetails.countryOrRegion)
+| where isnotempty(Country)
+| summarize
+    TotalSignins  = count(),
+    FailedSignins = countif(ResultType != 0),
+    UniqueUsers   = dcount(UserPrincipalName)
+    by Country
+| extend FailureRate = round(100.0 * FailedSignins / TotalSignins, 2)
+| sort by TotalSignins desc

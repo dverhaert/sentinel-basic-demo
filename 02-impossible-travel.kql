@@ -1,0 +1,44 @@
+// =============================================================
+// Exercise 2 - Impossible travel detection
+// =============================================================
+// Goal: find users who signed in from two different countries
+// within 1 hour - physically impossible, classic identity attack signal.
+//
+// Technique: serialize the rows per user, then use prev() to compare
+// each sign-in to the previous one for that same user.
+//
+// Where to paste: Microsoft Sentinel > Logs
+// Required table: SigninLogs
+// =============================================================
+
+SigninLogs
+| where TimeGenerated > ago(24h)
+| where ResultType == 0                       // successful sign-ins only
+| project
+    TimeGenerated,
+    UserPrincipalName,
+    IPAddress,
+    Country = tostring(LocationDetails.countryOrRegion),
+    City    = tostring(LocationDetails.city),
+    AppDisplayName
+| sort by UserPrincipalName asc, TimeGenerated asc
+| serialize
+| extend
+    PrevTime    = prev(TimeGenerated),
+    PrevUser    = prev(UserPrincipalName),
+    PrevCountry = prev(Country),
+    PrevIP      = prev(IPAddress)
+| where UserPrincipalName == PrevUser
+| where Country != PrevCountry and isnotempty(Country) and isnotempty(PrevCountry)
+| where TimeGenerated - PrevTime < 1h
+| project
+    UserPrincipalName,
+    FromCountry = PrevCountry,
+    ToCountry   = Country,
+    FromIP      = PrevIP,
+    ToIP        = IPAddress,
+    FromTime    = PrevTime,
+    ToTime      = TimeGenerated,
+    TimeDelta   = TimeGenerated - PrevTime,
+    AppDisplayName
+| sort by TimeDelta asc
