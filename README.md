@@ -154,7 +154,7 @@ If you're short on time, import [`workbook-starter.json`](workbook-starter.json)
 
 ---
 
-## Wrap (5 min)
+## Wrap up (5 min)
 
 - Recap: you triaged an incident, hunted with KQL, and visualized findings — the full SecOps loop
 - Next steps: analytics rule templates, UEBA, automation playbooks (Logic Apps)
@@ -162,12 +162,3 @@ If you're short on time, import [`workbook-starter.json`](workbook-starter.json)
   - [SC-200 learning path](https://learn.microsoft.com/training/courses/sc-200t00)
   - [Azure-Sentinel GitHub repo](https://github.com/Azure/Azure-Sentinel) — KQL query library, workbooks, playbooks
   - [KQL quick reference](https://learn.microsoft.com/azure/data-explorer/kql-quick-reference)
-
----
-
-## Notes for the facilitator
-
-- Run all three exercises in a **shared lab tenant** — never against production
-- If the seeded incident in Exercise 1 isn't available, substitute any High-severity alert
-- KQL syntax varies slightly across data sources — these queries assume **Azure AD / Entra ID sign-in logs**. Swap `SigninLogs` for `AADNonInteractiveUserSignInLogs` if you want to cover service principals
-- Encourage participants to **break things** in their tile copies — that's where the learning sticks
