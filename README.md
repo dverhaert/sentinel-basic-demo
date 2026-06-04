@@ -4,10 +4,12 @@ This lab walks through a simple Microsoft Sentinel workflow from end to end: **t
 
 It is written for people who already know basic SIEM concepts but are new to Microsoft Sentinel.
 
-> **Prereq:** You need reader or contributor access to a Sentinel workspace that already contains sample sign-in data. 
+> **Prereq:** You need at least reader access to a Sentinel workspace that already contains sample sign-in data (contributor is only needed for optional sandbox save/create tasks).
 <!-- > The easiest setup is the **Microsoft Sentinel Training Lab** solution from Content Hub. -->
 
 > **Platform update (2026):** For new detections, Microsoft recommends **custom detection rules** in the Microsoft Defender portal as the primary path. Scheduled **analytics rules** are still available and useful in some scenarios, especially for Sentinel-ingested data. Also note the Azure portal Sentinel experience is on a retirement timeline, with Defender portal as the long-term destination.
+
+> **Shared lab mode:** This guide is written for multi-user environments. By default, run the exercises in **read-only / no-save mode** so participants do not modify incidents, rules, or workbooks used by others.
 
 ---
 
@@ -24,7 +26,7 @@ The exercises follow a common SOC workflow:
 1. Start with a suspicious incident
 2. Pivot into the underlying telemetry
 3. Search for the same pattern across the environment
-4. Save the result in a dashboard so the team can monitor it over time
+4. Turn the result into a reusable dashboard view (or a draft in shared read-only mode)
 
 If you are new to KQL, treat it as a pipeline language: each line takes the result from the previous line and transforms it. Common operators in this lab are:
 
@@ -38,10 +40,10 @@ If you are new to KQL, treat it as a pipeline language: each line takes the resu
 
 ## What you will do
 
-- Investigate a seeded sign-in incident
+- Investigate an existing incident in your environment
 - Query `SigninLogs` to find repeated failures and suspicious travel patterns
-- Build a simple workbook that visualizes sign-in activity
-- If you have extra time: create a custom detection, automate enrichment, and run a KQL job over long-term data
+- Build a simple workbook design that visualizes sign-in activity
+- If you have extra time: design a custom detection and enrichment approach, and run a KQL job over long-term data
 
 ---
 
@@ -62,19 +64,21 @@ All `.kql` files are copy-paste ready into **Sentinel → Logs**. The workbook J
 
 ---
 
-## Exercise 1 — Triage a suspicious sign-in incident (15 min)
+## Exercise 1 — Triage a suspicious incident (15 min)
 
-**Scenario:** An employee account triggered a high-severity alert overnight. Triage it.
+**Scenario:** Pick a recent incident from your environment and triage it.
 
 In Sentinel, an incident is the investigation container that pulls together related alerts, entities, and evidence. Your goal is to understand what happened, decide whether it is suspicious, and record a clear conclusion.
 
+For shared environments, avoid changing incident ownership/state. Treat this as an investigation walkthrough and capture your verdict in your own notes.
+
 **Tasks:**
 
-1. Open **Incidents** → filter to **High** severity → pick the seeded *"Anomalous sign-in"* incident
-2. Assign it to yourself, set status to **Active**
-3. Open the **investigation graph** — identify the **user**, **IP**, and **device** entities
-4. Answer: *Where did the sign-in originate? Is there a second sign-in from a different country within 1 hour?*
-5. Add a **comment** with your verdict (true positive / false positive) and close the incident
+1. Open **Incidents** → choose a recent incident with identity or sign-in context
+*Please keep the incident unchanged (do not reassign owner, status, or classification) so other people can use the lab*
+1. Open the **investigation graph** — identify the **user**, **IP**, and **device** entities
+2. Answer: *Where did the activity originate? Is there evidence of a second sign-in from a different country within 1 hour?*
+3. Record your verdict (true positive / false positive / needs more data) in personal notes instead of commenting on and closing the shared incident
 
 ---
 
@@ -127,7 +131,9 @@ SigninLogs
 
 **Step 3 — Save as a hunting query**
 
-In **Sentinel → Hunting → Queries → New Query**, paste the final query, give it a name and a MITRE tactic (Initial Access / Credential Access), and save.
+In **Sentinel → Hunting → Queries → New Query**, paste the final query, give it a name and a MITRE tactic (Initial Access / Credential Access), and save **only if you are working in an isolated personal lab**.
+
+In shared environments, run the query and keep a local copy of the KQL instead of saving tenant-level artifacts.
 
 A hunting query is useful for analyst-led exploration. If you later want automated alerts, the next step is to operationalize the logic as a **custom detection rule** (preferred) or a scheduled **analytics rule** when that is the better fit for your environment.
 
@@ -145,7 +151,7 @@ Workbooks are Sentinel dashboards built from queries, parameters, and visualizat
 2. Paste [`03-failed-signins-timechart.kql`](queries/03-failed-signins-timechart.kql), set visualization to **Time chart**
 3. Add a second tile with [`04-signins-by-country.kql`](queries/04-signins-by-country.kql)
 4. Switch its visualization to **Map** (pick `Country` as the location field) or **Bar chart**
-5. Save the workbook as *"Identity Risk — Quick View"*
+5. In shared environments, use **Done Editing** without saving, or save only to a personal workspace/resource group
 
 ### Option B — Import the starter workbook
 
@@ -154,7 +160,7 @@ If you want to start from a prepared template, import [`workbook-starter.json`](
 1. **Workbooks → New** → click the **`</>` Advanced Editor** icon
 2. Switch the template type to **Gallery Template**
 3. Paste the contents of `workbook-starter.json` and click **Apply**
-4. Click **Done Editing → Save**
+4. Review the tiles; save only in an isolated personal environment
 
 ---
 
@@ -164,16 +170,18 @@ If you want to start from a prepared template, import [`workbook-starter.json`](
 
 This exercise moves from ad-hoc hunting into repeatable detection engineering. The goal is to create a rule that generates alerts/incidents and apply lightweight automation so triage starts with more context.
 
+For shared training tenants, treat this as a design exercise unless the instructor provides an isolated sandbox.
+
 **Tasks:**
 
-1. In the **Microsoft Defender portal**, open the detection authoring experience (for example, **Detection engineering / Manage rules**) and start a **custom detection rule**
+1. In the **Microsoft Defender portal**, open the detection authoring experience (for example, **Detection engineering / Manage rules**) and draft a **custom detection rule** configuration
 2. Reuse the query from Exercise 2, or simplify it so it returns only the events you want to alert on
 3. Name the rule *"Impossible Travel - Demo"* and configure execution settings that match your objective (for example, hourly)
 4. Configure alert and incident behavior, including severity and key entity mapping (user, IP, location)
-5. Save and enable the rule
-6. Create or update an **automation rule** so incidents from this detection are enriched consistently
+5. Save and enable the rule only in an isolated sandbox
+6. Create or update an **automation rule** only in an isolated sandbox so incidents from this detection are enriched consistently
 7. Add simple enrichment actions, such as assigning severity, adding a tag, updating the title, or adding a comment that tells the analyst this incident came from the impossible-travel detection
-8. Trigger the rule on fresh data if available, then confirm the resulting incident includes the enrichment you configured
+8. If enabled in a sandbox, trigger the rule on fresh data and confirm the resulting incident includes the enrichment you configured
 
 If your tenant still uses the classic Sentinel analytics workflow, you can perform the same exercise with a scheduled analytics rule and equivalent enrichment automation.
 
@@ -204,7 +212,7 @@ If your environment does not expose the data lake features, you can still do the
 ## Wrap up
 
 - Recap: you triaged an incident, hunted with KQL, and visualized findings — the full SecOps loop
-- Next steps: custom detection rules, UEBA, automation playbooks (Logic Apps), and longer-range hunts over historical data
+- Next steps: in a personal sandbox, move from draft content to custom detection rules, UEBA, automation playbooks (Logic Apps), and longer-range hunts over historical data
 - Resources:
   - [SC-200 learning path](https://learn.microsoft.com/training/courses/sc-200t00)
   - [Azure-Sentinel GitHub repo](https://github.com/Azure/Azure-Sentinel) — KQL query library, workbooks, playbooks
